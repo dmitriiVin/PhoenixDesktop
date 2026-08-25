@@ -20,6 +20,38 @@ find_package(LayerShellQt REQUIRED)
 
 qt_standard_project_setup()
 
+# --------------------------------------------------
+# Phoenix config
+# --------------------------------------------------
+
+set(PHOENIX_CONFIG_SOURCE_DIR
+    "${CMAKE_SOURCE_DIR}/config"
+)
+
+set(PHOENIX_CONFIG_DIR
+    "${CMAKE_BINARY_DIR}/config"
+)
+
+set(PHOENIX_CONFIG_FILES
+    "${PHOENIX_CONFIG_SOURCE_DIR}/phoenix.conf"
+)
+
+add_custom_target(PhoenixConfig ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        "${PHOENIX_CONFIG_DIR}"
+
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${PHOENIX_CONFIG_SOURCE_DIR}/phoenix.conf"
+        "${PHOENIX_CONFIG_DIR}/phoenix.conf"
+
+    DEPENDS
+        ${PHOENIX_CONFIG_FILES}
+)
+
+# --------------------------------------------------
+# Phoenix executable
+# --------------------------------------------------
+
 qt_add_executable(PhoenixDesktop
     app/src/main.cpp
     app/src/Application.cpp
@@ -27,7 +59,24 @@ qt_add_executable(PhoenixDesktop
 
     app/src/DesktopManager.cpp
     app/src/DesktopManager.hpp
-    )
+
+    app/src/DesktopItem.cpp
+    app/src/DesktopItem.hpp
+
+    app/src/IconThemeManager.cpp
+    app/src/IconThemeManager.hpp
+)
+
+add_dependencies(PhoenixDesktop PhoenixConfig)
+
+target_compile_definitions(PhoenixDesktop
+    PRIVATE
+        PHOENIX_CONFIG_DIR="${PHOENIX_CONFIG_DIR}"
+)
+
+# --------------------------------------------------
+# QML
+# --------------------------------------------------
 
 set_source_files_properties(
     qml/Themes/PhoenixTheme.qml
@@ -42,7 +91,7 @@ qt_add_qml_module(PhoenixDesktop
     QML_FILES
         app/Main.qml
         app/Shell.qml
-        
+
         qml/Shell/Desktop.qml
         qml/Shell/DesktopIcon.qml
         qml/Shell/TopBar.qml
@@ -50,6 +99,10 @@ qt_add_qml_module(PhoenixDesktop
 
         qml/Themes/PhoenixTheme.qml
 )
+
+# --------------------------------------------------
+# Libraries
+# --------------------------------------------------
 
 target_link_libraries(PhoenixDesktop
     PRIVATE
